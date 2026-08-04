@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/QueueMed.Api/QueueMed.Api.csproj" />
+    <Project Path="src/QueueMed.Application/QueueMed.Application.csproj" />
+    <Project Path="src/QueueMed.Domain/QueueMed.Domain.csproj" />
+    <Project Path="src/QueueMed.Infrastructure/QueueMed.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/QueueMed.Application.Tests/QueueMed.Application.Tests.csproj" />
+  </Folder>
+</Solution>
