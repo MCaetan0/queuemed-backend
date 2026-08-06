@@ -4,7 +4,7 @@ WORKDIR /src
 
 COPY . .
 
-RUN dotnet restore QueueMed.slnx
+RUN dotnet restore src/QueueMed.Api/QueueMed.Api.csproj
 
 RUN dotnet publish src/QueueMed.Api/QueueMed.Api.csproj \
     -c Release \
