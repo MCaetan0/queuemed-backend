@@ -12,31 +12,25 @@ API ASP.NET Core 8 para gestão de fila de espera clínica via QR code.
 
 ## Configuração
 
-1. Copie o template:
+1. Copie o template e preencha **todas** as variáveis obrigatórias (sem valores default no código):
 
 ```bash
 cp .env.example .env
 ```
 
-2. Suba o Redis local:
+| Variável | Obrigatória | Uso |
+|----------|-------------|-----|
+| `Base__Url` | sim | URL pública (CORS + QR `{Base__Url}/entrar`) |
+| `ASPNETCORE_URLS` | local | Bind do Kestrel (em Railway use `PORT`) |
+| `Redis__Host` | sim | Host Redis |
+| `Redis__Port` | sim* | Porta (*se o host não incluir `:porta`) |
+| `Redis__Password` | se o Redis exigir | Senha |
+| `Redis__User` | se o Redis exigir | Usuário |
+| `Redis__AbortConnect` | sim | `true` / `false` |
 
-```bash
-docker compose up -d
-```
+Opcional: `QrCode__EntryUrl`, `Cors__Origins__0`, `Jwt__Key`, `Seed__AtendenteSenha`.
 
-3. No `.env`, defina as variáveis Redis (a API monta a connection string):
-
-| Variável | Exemplo |
-|----------|---------|
-| `Redis__Host` | `localhost` ou `host.proxy.rlwy.net` |
-| `Redis__Port` | `6379` ou `48041` (Railway) |
-| `Redis__Password` | senha do Redis |
-| `Redis__User` | `default` (Railway) |
-| `Redis__AbortConnect` | `false` |
-
-Opcional: `Jwt__Key`, `Seed__AtendenteSenha`.
-
-A API carrega o `.env` no startup (DotNetEnv). **Redis é obrigatório** — sem ele a API não sobe.
+A API carrega o `.env` no startup (DotNetEnv). Sem `Base__Url` ou Redis a API **não sobe**.
 
 ## Executar a API
 
@@ -44,7 +38,7 @@ A API carrega o `.env` no startup (DotNetEnv). **Redis é obrigatório** — sem
 dotnet run --project src/QueueMed.Api
 ```
 
-Swagger: `http://localhost:5172/swagger` (porta conforme `launchSettings`).
+Swagger: `{ASPNETCORE_URLS}/swagger` (conforme o `.env`).
 
 ### Credenciais seed
 

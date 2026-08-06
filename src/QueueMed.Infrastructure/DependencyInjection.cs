@@ -15,8 +15,22 @@ public static class DependencyInjection
     {
         services.Configure<QueueOptions>(configuration.GetSection(QueueOptions.SectionName));
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<BaseUrlOptions>(configuration.GetSection(BaseUrlOptions.SectionName));
         services.Configure<QrCodeOptions>(configuration.GetSection(QrCodeOptions.SectionName));
         services.Configure<SeedOptions>(configuration.GetSection(SeedOptions.SectionName));
+
+        var baseUrl = ResolveRequiredBaseUrl(configuration);
+
+        services.PostConfigure<QrCodeOptions>(qr =>
+        {
+            if (!string.IsNullOrWhiteSpace(qr.EntryUrl))
+            {
+                qr.EntryUrl = qr.EntryUrl.Trim();
+                return;
+            }
+
+            qr.EntryUrl = $"{baseUrl}/entrar";
+        });
 
         var redisConnection = ResolveRedisConnectionString(configuration);
         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnection));
@@ -26,6 +40,19 @@ public static class DependencyInjection
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
         return services;
+    }
+
+    /// <summary>Requires Base__Url. Throws if missing.</summary>
+    public static string ResolveRequiredBaseUrl(IConfiguration configuration)
+    {
+        var baseUrl = configuration["Base:Url"]?.Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            throw new InvalidOperationException(
+                "Base__Url não configurado. Defina a variável de ambiente Base__Url.");
+        }
+
+        return baseUrl;
     }
 
     /// <summary>
@@ -40,10 +67,20 @@ public static class DependencyInjection
             host = host.Trim();
             var port = configuration["Redis:Port"]?.Trim();
 
-            // host:port if Host has no port yet and Port is set
-            var endpoint = host.Contains(':') || string.IsNullOrWhiteSpace(port)
-                ? host
-                : $"{host}:{port}";
+            string endpoint;
+            if (host.Contains(':'))
+            {
+                endpoint = host;
+            }
+            else if (!string.IsNullOrWhiteSpace(port))
+            {
+                endpoint = $"{host}:{port}";
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    "Redis__Port não configurado. Defina Redis__Port ou inclua a porta em Redis__Host.");
+            }
 
             var parts = new List<string> { endpoint };
 
@@ -60,7 +97,13 @@ public static class DependencyInjection
             }
 
             var abortConnect = configuration["Redis:AbortConnect"];
-            parts.Add($"abortConnect={(string.IsNullOrWhiteSpace(abortConnect) ? "false" : abortConnect.Trim())}");
+            if (string.IsNullOrWhiteSpace(abortConnect))
+            {
+                throw new InvalidOperationException(
+                    "Redis__AbortConnect não configurado. Defina Redis__AbortConnect (true/false).");
+            }
+
+            parts.Add($"abortConnect={abortConnect.Trim()}");
 
             var ssl = configuration["Redis:Ssl"];
             if (!string.IsNullOrWhiteSpace(ssl))
@@ -77,7 +120,7 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(readyMade))
         {
             throw new InvalidOperationException(
-                "Redis não configurado. Defina Redis__Host (e opcionalmente Redis__Port, Redis__Password, Redis__User) " +
+                "Redis não configurado. Defina Redis__Host e Redis__Port (e Redis__Password/Redis__User se necessário) " +
                 "ou ConnectionStrings__Redis.");
         }
 

@@ -90,8 +90,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+var baseUrl = QueueMed.Infrastructure.DependencyInjection.ResolveRequiredBaseUrl(builder.Configuration);
+
 var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-                  ?? ["http://localhost:3000", "http://localhost:5173"];
+                  ?.Where(o => !string.IsNullOrWhiteSpace(o))
+                  .Select(o => o.Trim().TrimEnd('/'))
+                  .Distinct(StringComparer.OrdinalIgnoreCase)
+                  .ToArray()
+                  ?? [];
+
+if (corsOrigins.Length == 0)
+{
+    corsOrigins = [baseUrl];
+}
+else if (!corsOrigins.Contains(baseUrl, StringComparer.OrdinalIgnoreCase))
+{
+    corsOrigins = [.. corsOrigins, baseUrl];
+}
 
 builder.Services.AddCors(options =>
 {
@@ -111,7 +126,10 @@ builder.Services.AddSignalR()
     });
 
 var port = Environment.GetEnvironmentVariable("PORT");
-builder.WebHost.UseUrls($"http://*:{port}");
+if (!string.IsNullOrWhiteSpace(port))
+{
+    builder.WebHost.UseUrls($"http://*:{port}");
+}
     
 var app = builder.Build();
 

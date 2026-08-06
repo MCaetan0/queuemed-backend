@@ -4,5 +4,9 @@ public class QrCodeOptions
 {
     public const string SectionName = "QrCode";
 
-    public string EntryUrl { get; set; } = "http://localhost:3000/entrar";
+    /// <summary>
+    /// Absolute URL encoded in the QR. If empty, becomes {Base:Url}/entrar.
+    /// Env: QrCode__EntryUrl
+    /// </summary>
+    public string EntryUrl { get; set; } = string.Empty;
 }
