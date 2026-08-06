@@ -110,6 +110,9 @@ builder.Services.AddSignalR()
         options.Configuration.ChannelPrefix = StackExchange.Redis.RedisChannel.Literal("QueueMed");
     });
 
+var port = Environment.GetEnvironmentVariable("PORT");
+builder.WebHost.UseUrls($"http://*:{port}");
+    
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
